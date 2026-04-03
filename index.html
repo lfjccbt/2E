@@ -46,6 +46,9 @@ body {
   user-select: none;
 }
 
+  #totalQuestionsDisplay {
+    display: none !important;
+}
 
 #screenshotProtection {
   position: fixed;
@@ -1429,7 +1432,128 @@ body.anti-sleep-active {
 </head>
 
 <body>
+<script>
+    // Class lock check - redirects if class is locked
+    (function() {
+        // Get class name from URL or page
+        const className = '2M'; // Change this for each class!
+        const LOCK_CONFIG_URL = 'https://raw.githubusercontent.com/lfjccbt/lock/main/locks.json';
+        
+        async function checkLockAndRedirect() {
+            try {
+                const response = await fetch(LOCK_CONFIG_URL + '?t=' + Date.now());
+                if (!response.ok) return;
+                
+                const locks = await response.json();
+                
+                if (locks[className] === true) {
+                    // Class is locked - redirect to lock message page
+                    document.body.innerHTML = `
+                        <div style="
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 100vh;
+                            background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+                            font-family: system-ui;
+                            text-align: center;
+                            padding: 20px;
+                        ">
+                            <div style="
+                                background: white;
+                                border-radius: 30px;
+                                padding: 50px;
+                                max-width: 450px;
+                                border: 3px solid #ef4444;
+                            ">
+                                <div style="font-size: 80px;">🔒</div>
+                                <h1 style="color: #dc2626; margin: 20px 0;">Class Locked</h1>
+                                <p style="color: #4b5563; margin-bottom: 30px; font-size: 18px;">
+                                    Class ${className} is currently locked by the administrator.<br><br>
+                                    Please check back later.
+                                </p>
+                                <button onclick="window.location.href='../'" style="
+                                    background: #ef4444;
+                                    color: white;
+                                    border: none;
+                                    padding: 12px 30px;
+                                    border-radius: 40px;
+                                    font-size: 16px;
+                                    cursor: pointer;
+                                ">← Go Back</button>
+                            </div>
+                        </div>
+                    `;
+                    document.title = `Class ${className} Locked`;
+                }
+            } catch (error) {
+                console.error('Lock check error:', error);
+            }
+        }
+        
+        checkLockAndRedirect();
+    })();
+</script>  
+<script>
+// Load config from GitHub
+async function loadExamConfig() {
+    const className = window.location.pathname.split('/')[1] || '1D';
+    const url = `https://raw.githubusercontent.com/lfjccbt/${className}/main/config.json?t=${Date.now()}`;
+    
+    try {
+        const res = await fetch(url);
+        if (res.ok) {
+            const config = await res.json();
+            
+            // Update EXAM_SETUP
+            EXAM_SETUP = config;
+            
+            // Update marks variables
+            MARK_PER_CORRECT = config.correctMark;
+            MARK_PER_WRONG = config.wrongMark;
+            
+            // Update marks display on screen (THIS UPDATES CHANGE #1)
+            const correctDisplay = document.getElementById('correctMarkDisplay');
+            const wrongDisplay = document.getElementById('wrongMarkDisplay');
+            if (correctDisplay) correctDisplay.textContent = `CORRECT ANSWER + ${config.correctMark} MARKS`;
+            if (wrongDisplay) wrongDisplay.textContent = `WRONG ANSWER ${config.wrongMark} MARK`;
+            
+            // Recalculate question numbers
+            let start = 1;
+            EXAM_SETUP.subjects.forEach(s => {
+                s.start = start;
+                s.end = start + s.questions - 1;
+                s.mcq = s.questions - (s.numerical || 0);
+                s.numericalStart = s.end - (s.numerical || 0) + 1;
+                start = s.end + 1;
+            });
+            TOTAL_QUESTIONS = start - 1;
+            document.getElementById('totalQuestionsDisplay').innerHTML = `<strong>TOTAL ${TOTAL_QUESTIONS} QUESTIONS</strong>`;
+            // Update total questions display
+            const totalDisplay = document.getElementById('totalQuestionsDisplay');
+            if (totalDisplay) totalDisplay.innerHTML = `<strong>TOTAL ${window.TOTAL_QUESTIONS} QUESTIONS</strong>`;
+            
+            // Update subject breakdown
+            let breakdownHTML = '';
+            EXAM_SETUP.subjects.forEach(s => {
+                if (s.numerical > 0) {
+                    breakdownHTML += `<p style="margin: 5px 0;"><strong>• ${s.name}: ${s.mcq} (MCQ), ${s.numerical} (Numerical Input)</strong></p>`;
+                } else {
+                    breakdownHTML += `<p style="margin: 5px 0;"><strong>• ${s.name}: ${s.questions} (MCQ)</strong></p>`;
+                }
+            });
+            const breakdownDiv = document.getElementById('subjectBreakdownDisplay');
+            if (breakdownDiv) breakdownDiv.innerHTML = breakdownHTML;
+            
+            console.log('✅ Config loaded');
+        }
+    } catch(e) {
+        console.log('Failed to load config');
+    }
+}
 
+loadExamConfig();
+</script>
 
 <div id="powerLossRecoveryOverlay">
   <div id="powerLossRecoveryBox">
@@ -1463,10 +1587,10 @@ body.anti-sleep-active {
 
 <div id="accessDenied" class="access-denied">
     <h1>LFJC ONLINE EXAMINATION</h1>
-    <p style="font-size: 1.2em; margin: 10px 0;" id="totalQuestionsDisplay">TOTAL QUESTIONS</p>
+    <p style="font-size: 1.2em; margin: 10px 0;" id="totalQuestionsDisplay">Loading...</p>
     <div id="subjectBreakdownDisplay"></div>
-   <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 1 MARKS</p>  
-    <p style="margin: 5px 0; font-weight: bold;">WRONG ANSWER 0 MARK</p>
+  <p style="margin: 10px 0; font-weight: bold;" id="correctMarkDisplay">CORRECT ANSWER + 1 MARKS</p>  
+  <p style="margin: 5px 0; font-weight: bold;" id="wrongMarkDisplay">WRONG ANSWER 0 MARK</p>
     <input type="password" id="accessCode" class="access-code-input" placeholder="Enter Access Code">
     <button id="verifyAccess" class="verify-btn">VERIFY ACCESS</button>
     <div id="accessError" class="access-error">❌ Invalid access code. Please try again.</div>
@@ -1640,33 +1764,13 @@ body.anti-sleep-active {
 
 <script>
 
-const EXAM_SETUP = {
-    
-    subjects: [
-
-      { name: "PHYSICS", questions: 45, numerical: 0 },
-      { name: "CHEMISTRY", questions: 45, numerical: 0 }, 
-      { name: "BOTANY", questions: 45, numerical: 0 },
-      { name: "ZOOLOGY", questions: 45, numerical: 0 }
-    ],
-    
-    
+let EXAM_SETUP = {
+    subjects: [],
     duration: 180,
+    activeForForms: []
+};
     
-    
-    activeForForms: ["PHYSICS","CHEMISTRY","BOTANY","ZOOLOGY"]
- // MATHS_A	
- // MATHS_B	
- // MATHS	
- // BOTANY	
- // ZOOLOGY	
- // BZ	
- // PHYSICS	
- // CHEMISTRY
- };
-  
-    
-    
+ let TOTAL_QUESTIONS = 0;   
 
 let currentStart = 1;
 EXAM_SETUP.subjects.forEach(subject => {
@@ -1677,7 +1781,6 @@ EXAM_SETUP.subjects.forEach(subject => {
     currentStart = subject.end + 1;
 });
 
-const TOTAL_QUESTIONS = currentStart - 1;
 const EXAM_DURATION_MINUTES = EXAM_SETUP.duration;
 const ACTIVE_EXAM_SUBJECTS = EXAM_SETUP.activeForForms;
 
@@ -1720,7 +1823,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('subjectBreakdownDisplay').innerHTML = breakdownHTML;
 });
 
-const MARK_PER_CORRECT = 1, MARK_PER_WRONG = 0;
+let MARK_PER_CORRECT = 1, MARK_PER_WRONG = 0;
 const STORAGE_KEY_PREFIX = "lfjc_exam_";
 const ACCESS_CODE = "lfjc2025";
 const ADMIN_PASSWORD = "admin2025";
@@ -2553,18 +2656,31 @@ function parseAnswerKeyFile(text) {
     
     for (let line of lines) {
         line = line.trim();
-        if (line) {
-            
-            if (line.length === 5 && /^[A-D]{5}$/.test(line)) {
-                
-                const lineAnswers = line.split('');
-                answers.push(...lineAnswers);
-                console.log(`📝 Line "${line}" → 5 MCQ answers:`, lineAnswers);
-            } else {
-                
-                answers.push(line);
-                console.log(`📝 Single answer: "${line}"`);
+        if (!line) continue;
+        
+        // Check if line contains ONLY letters A-D
+        if (/^[A-D]+$/i.test(line)) {
+            // Letters: split each character as separate answer
+            for (let i = 0; i < line.length; i++) {
+                answers.push(line[i].toUpperCase());
             }
+            console.log(`📝 Letters "${line}" → ${line.length} answers`);
+        }
+        // Check if line contains numbers (numerical answers)
+        else if (/^[0-9]+$/.test(line)) {
+            // Numbers: whole line is ONE answer
+            answers.push(line);
+            console.log(`📝 Numerical "${line}" → 1 answer`);
+        }
+        // Mixed or other (should not happen)
+        else {
+            // Try to parse as individual letters if they are A-D
+            for (let i = 0; i < line.length; i++) {
+                if (line[i].match(/[A-D]/i)) {
+                    answers.push(line[i].toUpperCase());
+                }
+            }
+            console.log(`📝 Mixed "${line}" → parsed as letters`);
         }
     }
     
@@ -4297,7 +4413,7 @@ formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
 formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
 
 
-const subjectCodes = ACTIVE_EXAM_SUBJECTS.map(s => {
+const subjectCodes = (EXAM_SETUP.activeForForms || []).map(s => {
     if (s === "MATHS_A") return "MA";
     if (s === "MATHS_B") return "MB";
     if (s === "MATHS") return "M";
@@ -4316,41 +4432,43 @@ const dateStr = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear().
 formData.set(FORM_FIELDS.SECTION, answersData.student.sec + " " + dateStr + " " + subjectCodes);
 
 
-for (let subject of ACTIVE_EXAM_SUBJECTS) {
-   
-    const markValue = marks[subject]?.toFixed(2) || "0.00";
-    
-    
-    switch(subject) {
-        case "PHYSICS":
-            formData.append(FORM_FIELDS.PHYSICS, markValue);
-            break;
-        case "CHEMISTRY":
-            formData.append(FORM_FIELDS.CHEMISTRY, markValue);
-            break;
-        case "MATHS":
-            formData.append(FORM_FIELDS.MATHS, markValue);
-            break;
-        case "MATHS_A":
-            formData.append(FORM_FIELDS.MATHS_A, markValue);
-            break;
-        case "MATHS_B":
-            formData.append(FORM_FIELDS.MATHS_B, markValue);
-            break;
-        case "BOTANY":
-            formData.append(FORM_FIELDS.BOTANY, markValue);
-            break;
-        case "ZOOLOGY":
-            formData.append(FORM_FIELDS.ZOOLOGY, markValue);
-            break;
-        case "BZ":
-            formData.append(FORM_FIELDS.BZ, markValue);
-            break;
-        default:
-            console.log(`No field mapping for subject: ${subject}`);
+
+   // Only send marks for subjects that actually have questions
+const activeSubjects = EXAM_SETUP.activeForForms || [];
+
+for (let subject of activeSubjects) {
+    // Check if this subject has marks (has questions)
+    if (marks[subject] !== undefined) {
+        const markValue = marks[subject].toFixed(2);
+        
+        switch(subject) {
+            case "PHYSICS":
+                formData.append(FORM_FIELDS.PHYSICS, markValue);
+                break;
+            case "CHEMISTRY":
+                formData.append(FORM_FIELDS.CHEMISTRY, markValue);
+                break;
+            case "MATHS":
+                formData.append(FORM_FIELDS.MATHS, markValue);
+                break;
+            case "MATHS_A":
+                formData.append(FORM_FIELDS.MATHS_A, markValue);
+                break;
+            case "MATHS_B":
+                formData.append(FORM_FIELDS.MATHS_B, markValue);
+                break;
+            case "BOTANY":
+                formData.append(FORM_FIELDS.BOTANY, markValue);
+                break;
+            case "ZOOLOGY":
+                formData.append(FORM_FIELDS.ZOOLOGY, markValue);
+                break;
+            case "BZ":
+                formData.append(FORM_FIELDS.BZ, markValue);
+                break;
+        }
     }
 }
-
       
         formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
         
@@ -4358,7 +4476,7 @@ for (let subject of ACTIVE_EXAM_SUBJECTS) {
         const allAnswersString = formatAllAnswersString(progress.answers);
         formData.append(FORM_FIELDS.ALL_ANSWERS, allAnswersString);
         
-        console.log("✅ Final submission with subjects:", ACTIVE_EXAM_SUBJECTS.join(", "));
+        console.log("✅ Final submission with subjects:", (EXAM_SETUP.activeForForms || []).join(", "));
         console.log("📤 Total marks:", marks.total.toFixed(2));
         console.log("📤 Answers string length:", allAnswersString.length);
         
@@ -4851,12 +4969,11 @@ window.addEventListener('load', function() {
   
   systemTrayDetector = new SystemTrayViolationDetector();
   
-  loadAnswerKey().then(success => {
-    if (success) {
-      console.log("✅ External answer key loaded successfully!");
-      showToast('✅ Answer key loaded!', 'success', 3000);
-    }
-  });
+  // Wait for config to load first, then load answer key
+(async function() {
+    await loadExamConfig();    // Load config first
+    await loadAnswerKey();      // Then load answer key
+})();
   
   setTimeout(() => {
     initPowerLossProtection();
@@ -4869,4 +4986,4 @@ console.log(`📁 Expecting ${TOTAL_QUESTIONS} answers`);
 console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "));
 </script> 
 </body>
-</html>
+</html> 
