@@ -1429,6 +1429,12 @@ button:focus {
 body.anti-sleep-active {
   animation: antiSleepPulse 60s infinite;
 }
+
+/* ===== SHIMMER ANIMATION FOR LAZY LOADING ===== */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 </style>
 </head>
 
@@ -2608,6 +2614,9 @@ async function loadAnswerKey() {
             images.push(`questions/${i}.png`);
         }
         
+        // ✅ UNCOMMENT THIS - Call preloadAllImages to start lazy loading
+        await preloadAllImages();
+        
         showToast('✅ Answer key loaded! Enter access code.', 'success', 3000);
         
         clearErrors();
@@ -2735,7 +2744,7 @@ function renderQuestionImage(questionNumber) {
             <div class="question-image-container">
                 <img src="${getBestImagePath(questionNumber)}" 
                      class="question-image" 
-                     alt="Question ${questionNumber}"
+                     alt="Question"
                      style="max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px;">
             </div>
         `;
@@ -2768,13 +2777,13 @@ function renderQuestionImage(questionNumber) {
                     animation: spin 1s linear infinite;
                 "></div>
                 <div style="margin-top: 15px; color: #6c757d; font-size: 14px;">
-                 &nbsp; ⏳ Please wait...
+                    Loading...
                 </div>
             </div>
             <img data-question="${questionNumber}"
                  data-src="${getBestImagePath(questionNumber)}"
                  class="question-image lazy-image"
-                 alt="Question ${questionNumber}"
+                 alt="Question"
                  style="display: none; max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px;"
                  onload="this.style.display='block'; document.getElementById('placeholder-${questionNumber}').style.display='none';">
         </div>
@@ -2817,14 +2826,22 @@ function updateImageError(questionNumber) {
             <div style="font-size: 48px; margin-bottom: 10px;">⚠️</div>
             <div style="font-weight: bold; margin-bottom: 5px;">Image Not Available</div>
             <div style="font-size: 14px; color: #856404;">
-                 image could not be loaded
+                Image could not be loaded
             </div>
-            <button onclick="retryImageLoad(${questionNumber})" 
-                    style="margin-top: 15px; padding: 8px 20px; 
-                           background: #4B0082; color: white; border: none; 
-                           border-radius: 4px; cursor: pointer;">
-                Retry
-            </button>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px;">
+                <button onclick="retryImageLoad(${questionNumber})" 
+                        style="padding: 8px 20px; 
+                               background: #4B0082; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer;">
+                    🔄 Retry
+                </button>
+                <button onclick="skipImageError(${questionNumber})" 
+                        style="padding: 8px 20px; 
+                               background: #6c757d; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer;">
+                    ⏭️ Skip
+                </button>
+            </div>
         `;
     }
 }
@@ -2853,8 +2870,32 @@ function retryImageLoad(questionNumber) {
         placeholder.innerHTML = `
             <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #4B0082; border-radius: 50%; animation: spin 1s linear infinite;"></div>
             <div style="margin-top: 15px; color: #6c757d; font-size: 14px;">
-                Retrying question ${questionNumber}...
+                Retrying...
             </div>
+        `;
+    }
+}
+
+function skipImageError(questionNumber) {
+    const placeholder = document.getElementById(`placeholder-${questionNumber}`);
+    if (placeholder) {
+        placeholder.style.cssText = `
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 20px;
+            color: #6c757d;
+            text-align: center;
+        `;
+        placeholder.innerHTML = `
+            <div style="font-size: 24px; margin-bottom: 10px;">📝</div>
+            <div style="font-size: 14px;">Image not available - you can still answer</div>
+            <div style="font-size: 12px; margin-top: 5px;">Select an option below</div>
         `;
     }
 }
@@ -2891,6 +2932,12 @@ function startBackgroundLoading() {
 
 async function preloadAllImages() {
     console.log("🖼️ Starting lazy loading...");
+    
+    // Populate images array
+    images = [];
+    for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
+        images.push(`questions/${i}.png`);
+    }
     
     const initialLoad = Math.min(3, TOTAL_QUESTIONS);
     for (let i = 1; i <= initialLoad; i++) {
@@ -4117,7 +4164,12 @@ function startWithSecurity(ok) {
   const studentKey = `${stuName.value}|${stuSection.value}|${stuRoll.value}|${stuAdm.value}`;
   
   examSecurity.enable().then(() => {
-    startExam(studentKey);
+    // Add random delay to stagger student starts (0.5-2 seconds)
+    const delay = Math.random() * 1500 + 500;
+    console.log(`⏳ Student ${stuName.value} starting in ${(delay/1000).toFixed(1)} seconds`);
+    setTimeout(() => {
+      startExam(studentKey);
+    }, delay);
   }).catch(err => {
     console.error('Failed to enable security:', err);
     alert('⚠️ Please allow full-screen mode to start the exam.');
