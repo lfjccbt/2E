@@ -2927,7 +2927,7 @@ async function preloadAllImages() {
         images.push(`questions/${i}.png`);
     }
     
-    const initialLoad = Math.min(3, TOTAL_QUESTIONS);
+    const initialLoad = Math.min(1, TOTAL_QUESTIONS);
     for (let i = 1; i <= initialLoad; i++) {
         await loadImageSafe(i);
     }
