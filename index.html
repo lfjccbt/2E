@@ -251,6 +251,7 @@ button:focus {
 
 #submitBtn {
   background: linear-gradient(145deg, #c8b88a, #b49e60);
+  display: none;
 }
 
 
@@ -1432,127 +1433,90 @@ body.anti-sleep-active {
 </head>
 
 <body>
+<!-- =========================================================== -->
+<!-- === PROFESSIONAL LOADING SCREEN WITH COUNTDOWN & WELCOME === -->
+<!-- =========================================================== -->
 <script>
-    // Class lock check - redirects if class is locked
     (function() {
-        // Get class name from URL or page
-        const className = '2M'; // Change this for each class!
-        const LOCK_CONFIG_URL = 'https://raw.githubusercontent.com/lfjccbt/lock/main/locks.json';
-        
-        async function checkLockAndRedirect() {
-            try {
-                const response = await fetch(LOCK_CONFIG_URL + '?t=' + Date.now());
-                if (!response.ok) return;
+        // Random delay between 5 and 45 seconds
+        const waitTime = Math.floor(Math.random() * 41) + 5;
+        console.log(`⏳ Delay: ${waitTime} seconds`);
+
+        // Create the loading screen overlay
+        const loading = document.createElement('div');
+        loading.id = 'delay-loading';
+        loading.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(145deg, #E6E6FA, #af82ba);
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            z-index: 999999; font-family: 'SF Pro Display', Arial, sans-serif; 
+            color: #4B0082; text-align: center; padding: 20px;
+        `;
+        loading.innerHTML = `
+            <div style="max-width: 500px;">
+                <!-- Welcome Note -->
+                 <h1 style="font-size: 4.8em; margin-bottom: 10px; color: #4B0082;">
+                            
+                   2E
+                </h1>
+                <h1 style="font-size: 2.8em; margin-bottom: 10px; color: #4B0082;">
+                            
+                    🎓 Welcome to LFJC ONLINE EXAMINATION 
+                </h1>
+                <p style="font-size: 1.2em; color: #5a2d82; margin-bottom: 30px;">
+                    Please wait while we prepare your exam...
+                </p>
                 
-                const locks = await response.json();
+                <!-- Spinner -->
+                <div style="width: 60px; height: 60px; border: 5px solid #f3f3f3; 
+                            border-top: 5px solid #4B0082; border-radius: 50%; 
+                            animation: spin 1s linear infinite; margin: 20px auto;">
+                </div>
                 
-                if (locks[className] === true) {
-                    // Class is locked - redirect to lock message page
-                    document.body.innerHTML = `
-                        <div style="
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            height: 100vh;
-                            background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
-                            font-family: system-ui;
-                            text-align: center;
-                            padding: 20px;
-                        ">
-                            <div style="
-                                background: white;
-                                border-radius: 30px;
-                                padding: 50px;
-                                max-width: 450px;
-                                border: 3px solid #ef4444;
-                            ">
-                                <div style="font-size: 80px;">🔒</div>
-                                <h1 style="color: #dc2626; margin: 20px 0;">Class Locked</h1>
-                                <p style="color: #4b5563; margin-bottom: 30px; font-size: 18px;">
-                                    Class ${className} is currently locked by the administrator.<br><br>
-                                    Please check back later.
-                                </p>
-                                <button onclick="window.location.href='../'" style="
-                                    background: #ef4444;
-                                    color: white;
-                                    border: none;
-                                    padding: 12px 30px;
-                                    border-radius: 40px;
-                                    font-size: 16px;
-                                    cursor: pointer;
-                                ">← Go Back</button>
-                            </div>
-                        </div>
-                    `;
-                    document.title = `Class ${className} Locked`;
-                }
-            } catch (error) {
-                console.error('Lock check error:', error);
-            }
-        }
-        
-        checkLockAndRedirect();
+                <!-- Countdown Timer -->
+                <p style="font-size: 1.5em; font-weight: bold; margin-top: 20px;">
+                    ⏳ <span id="delay-timer">${waitTime}</span> seconds remaining
+                </p>
+                <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                    Do not refresh the page
+                </p>
+            </div>
+        `;
+        document.body.appendChild(loading);
+
+        // Add spin animation
+        const style = document.createElement('style');
+        style.textContent = `@keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }`;
+        document.head.appendChild(style);
+
+        // Countdown timer
+        let seconds = waitTime;
+        const timer = document.getElementById('delay-timer');
+        const interval = setInterval(() => {
+            seconds--;
+            if (timer) timer.textContent = seconds;
+            if (seconds <= 0) clearInterval(interval);
+        }, 1000);
+
+        // After delay, remove loading screen and show your page
+        setTimeout(() => {
+            const el = document.getElementById('delay-loading');
+            if (el) el.remove();
+            console.log('✅ Delay complete. Your exam page is now visible.');
+        }, waitTime * 1000);
     })();
+</script>
+<!-- =========================================================== -->
+<!-- === END LOADING SCREEN                                    === -->
+<!-- =========================================================== -->
+
+<script>  
 </script>  
 <script>
-// Load config from GitHub
-async function loadExamConfig() {
-    const className = window.location.pathname.split('/')[1] || '1D';
-    const url = `https://raw.githubusercontent.com/lfjccbt/${className}/main/config.json?t=${Date.now()}`;
-    
-    try {
-        const res = await fetch(url);
-        if (res.ok) {
-            const config = await res.json();
-            
-            // Update EXAM_SETUP
-            EXAM_SETUP = config;
-            
-            // Update marks variables
-            MARK_PER_CORRECT = config.correctMark;
-            MARK_PER_WRONG = config.wrongMark;
-            
-            // Update marks display on screen (THIS UPDATES CHANGE #1)
-            const correctDisplay = document.getElementById('correctMarkDisplay');
-            const wrongDisplay = document.getElementById('wrongMarkDisplay');
-            if (correctDisplay) correctDisplay.textContent = `CORRECT ANSWER + ${config.correctMark} MARKS`;
-            if (wrongDisplay) wrongDisplay.textContent = `WRONG ANSWER ${config.wrongMark} MARK`;
-            
-            // Recalculate question numbers
-            let start = 1;
-            EXAM_SETUP.subjects.forEach(s => {
-                s.start = start;
-                s.end = start + s.questions - 1;
-                s.mcq = s.questions - (s.numerical || 0);
-                s.numericalStart = s.end - (s.numerical || 0) + 1;
-                start = s.end + 1;
-            });
-            TOTAL_QUESTIONS = start - 1;
-            document.getElementById('totalQuestionsDisplay').innerHTML = `<strong>TOTAL ${TOTAL_QUESTIONS} QUESTIONS</strong>`;
-            // Update total questions display
-            const totalDisplay = document.getElementById('totalQuestionsDisplay');
-            if (totalDisplay) totalDisplay.innerHTML = `<strong>TOTAL ${window.TOTAL_QUESTIONS} QUESTIONS</strong>`;
-            
-            // Update subject breakdown
-            let breakdownHTML = '';
-            EXAM_SETUP.subjects.forEach(s => {
-                if (s.numerical > 0) {
-                    breakdownHTML += `<p style="margin: 5px 0;"><strong>• ${s.name}: ${s.mcq} (MCQ), ${s.numerical} (Numerical Input)</strong></p>`;
-                } else {
-                    breakdownHTML += `<p style="margin: 5px 0;"><strong>• ${s.name}: ${s.questions} (MCQ)</strong></p>`;
-                }
-            });
-            const breakdownDiv = document.getElementById('subjectBreakdownDisplay');
-            if (breakdownDiv) breakdownDiv.innerHTML = breakdownHTML;
-            
-            console.log('✅ Config loaded');
-        }
-    } catch(e) {
-        console.log('Failed to load config');
-    }
-}
 
-loadExamConfig();
 </script>
 
 <div id="powerLossRecoveryOverlay">
@@ -1586,17 +1550,18 @@ loadExamConfig();
 
 
 <div id="accessDenied" class="access-denied">
-    <h1>LFJC ONLINE EXAMINATION</h1>
+  <h1>2E</h1>
+ <h1>LFJC ONLINE EXAMINATION</h1>
     <p style="font-size: 1.2em; margin: 10px 0;" id="totalQuestionsDisplay">Loading...</p>
     <div id="subjectBreakdownDisplay"></div>
-  <p style="margin: 10px 0; font-weight: bold;" id="correctMarkDisplay">CORRECT ANSWER + 1 MARKS</p>  
-  <p style="margin: 5px 0; font-weight: bold;" id="wrongMarkDisplay">WRONG ANSWER 0 MARK</p>
+  <p style="margin: 10px 0; font-weight: bold;" id="correctMarkDisplay">CORRECT ANSWER +4  MARKS</p>  
+  <p style="margin: 5px 0; font-weight: bold;" id="wrongMarkDisplay">WRONG ANSWER -1 MARK</p>
     <input type="password" id="accessCode" class="access-code-input" placeholder="Enter Access Code">
     <button id="verifyAccess" class="verify-btn">VERIFY ACCESS</button>
     <div id="accessError" class="access-error">❌ Invalid access code. Please try again.</div>
 </div>
 
-<header>LFJC ONLINE EXAMINATION</header>
+<header>2E-LFJC ONLINE EXAMINATION</header>
 
 <div id="studentEntry" style="display:none;">
   <div class="warning-banner" id="examWarning" style="display:none;">
@@ -1647,13 +1612,14 @@ loadExamConfig();
 </div>
 
 <div id="examArea" style="display:none;">
-  <div id="examHeader">
+<div id="examHeader">
     <div id="stuInfo"></div>
     <div id="stuQInfo"></div>
     <div>
         <span id="timerEl">🕒 00:00</span>
+        <span id="violationCounter" style="margin-left: 20px; color: orange; font-weight: bold; display: none;">⚠️ Violations: 0/3</span>
     </div>
-  </div>
+</div>
 
   <div id="questionContainer" style="text-align:center;margin-top:10px;"></div>
 
@@ -1765,13 +1731,18 @@ loadExamConfig();
 <script>
 
 let EXAM_SETUP = {
-    subjects: [],
-    duration: 120,
-    activeForForms: []
+    subjects: [
+        { name: "ZOOLOGY", questions: 60, numerical: 0 },
+        { name: "CHEMISTRY", questions: 60, numerical: 0 }
+    ],
+    duration: 120, // minutes
+    activeForForms: ["ZOOLOGY", "CHEMISTRY"],
+    correctMark: 4,
+    wrongMark: -1
 };
     
- let TOTAL_QUESTIONS = 0;   
-
+// Calculate TOTAL_QUESTIONS immediately
+let TOTAL_QUESTIONS = 0;   
 let currentStart = 1;
 EXAM_SETUP.subjects.forEach(subject => {
     subject.start = currentStart;
@@ -1780,7 +1751,7 @@ EXAM_SETUP.subjects.forEach(subject => {
     subject.numericalStart = subject.end - subject.numerical + 1;
     currentStart = subject.end + 1;
 });
-
+TOTAL_QUESTIONS = currentStart - 1; // This sets the total
 const EXAM_DURATION_MINUTES = EXAM_SETUP.duration;
 const ACTIVE_EXAM_SUBJECTS = EXAM_SETUP.activeForForms;
 
@@ -1823,7 +1794,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('subjectBreakdownDisplay').innerHTML = breakdownHTML;
 });
 
-let MARK_PER_CORRECT = 1, MARK_PER_WRONG = 0;
+let MARK_PER_CORRECT = 4 , MARK_PER_WRONG = -1;
 const STORAGE_KEY_PREFIX = "lfjc_exam_";
 const ACCESS_CODE = "lfjc2025";
 const ADMIN_PASSWORD = "admin2025";
@@ -1836,7 +1807,7 @@ let answerKey = [];
 let keyLoaded = false;
 
 
-const AUTO_SAVE_INTERVAL = 15;
+const AUTO_SAVE_INTERVAL = 180;
 const RECOVERY_WINDOW_HOURS = 4;
 const STORAGE_KEYS = {
     EXAM_PROGRESS: 'lfjc_exam_progress_v2',
@@ -1931,7 +1902,9 @@ let connectionStatusElement = null;
 let autoSaveIndicator = null;
 let powerLossRecoveryData = null;
 let resumeInProgress = false;
-
+let secretPasswordBuffer = '';        // ADD THIS
+const SECRET_PASSWORD = 'saisubmit';     // ADD THIS
+let secretUnlocked = false;           // ADD THIS
 
 let autoClickInterval = null;
 let keepAwakeSystem = null;
@@ -2453,49 +2426,65 @@ class SystemTrayViolationDetector {
         }
     }
     
-    handleViolation(violationType) {
-        if (!examInProgress) return;
-        
-        const currentTime = Date.now();
-        
-        if (currentTime - this.lastViolationTime < 1000) {
-            console.log(`Ignoring rapid system tray violation: ${violationType}`);
-            return;
-        }
-        
-        this.lastViolationTime = currentTime;
-        this.violationCount++;
-        
-        console.log(`🚨 System Tray Violation #${this.violationCount}: ${violationType}`);
-        
-        this.showWarning(this.violationCount, violationType);
-        
-        if (this.violationCount >= this.maxViolations) {
-            console.log('🚨 3 system tray violations detected - submitting exam!');
-            
-            this.showViolationOverlay(`
-                🚨 EXAM VIOLATION DETECTED
-                <br><br>
-                ${violationType}
-                <br><br>
-                <strong>3 system tray violations reached!</strong>
-                <br>
-                Submitting exam in 3 seconds...
-            `, 'red');
-            
-            setTimeout(() => {
-                if (examInProgress) {
-                    submitExam();
-                }
-            }, 3000);
+   handleViolation(violationType) {
+    if (!examInProgress) return;
+    
+    const currentTime = Date.now();
+    
+    if (currentTime - this.lastViolationTime < 1000) {
+        console.log(`Ignoring rapid system tray violation: ${violationType}`);
+        return;
+    }
+    
+    this.lastViolationTime = currentTime;
+    this.violationCount++;
+    
+    // ===== ADD THIS TO UPDATE COUNTER =====
+    const counter = document.getElementById('violationCounter');
+    if (counter) {
+        counter.style.display = 'inline-block';
+        counter.textContent = `⚠️ System Violations: ${this.violationCount}/3`;
+        if (this.violationCount >= 3) {
+            counter.style.color = 'red';
+            counter.style.animation = 'blinkTimer 0.5s infinite';
+        } else {
+            counter.style.color = 'orange';
+            counter.style.animation = 'none';
         }
     }
+    // ===== END ADDED CODE =====
+    
+    console.log(`🚨 System Tray Violation #${this.violationCount}: ${violationType}`);
+    
+    this.showWarning(this.violationCount, violationType);
+    
+    if (this.violationCount >= this.maxViolations) {
+        console.log('🚨 3 system tray violations detected - saving violation flag!');
+        localStorage.setItem('hasViolations', 'true');
+        
+        this.showViolationOverlay(`
+            🚨 EXAM VIOLATION DETECTED
+            <br><br>
+            ${violationType}
+            <br><br>
+            <strong>3 system tray violations reached!</strong>
+            <br>
+            Submitting exam in 3 seconds...
+        `, 'red');
+        
+        setTimeout(() => {
+            if (examInProgress) {
+                submitExam();
+            }
+        }, 3000);
+    }
+}
     
     showWarning(count, violationType) {
         const messages = [
             `⚠️ System Access: ${violationType} (1/${this.maxViolations})`,
-            `⚠️ System Access: ${violationType} (2/${this.maxViolations}) - One more violation will submit exam!`,
-            `🚨 3 system tray violations detected! ${violationType} - Submitting exam...`
+            `⚠️ System Access: ${violationType} (2/${this.maxViolations}) - One more violation will auto-submit!`,
+            `🚨 3 system tray violations detected! ${violationType} - Auto-submitting exam...`
         ];
         
         const messageIndex = Math.min(count - 1, 2);
@@ -2510,6 +2499,7 @@ class SystemTrayViolationDetector {
                 <strong>Count: ${count}/${this.maxViolations}</strong>
                 <br>
                 Accessing system tray, taskbar, or Windows shortcuts is prohibited!
+                ${count >= 3 ? 'Auto-submitting exam...' : ''}
             `, 'orange');
         }
     }
@@ -2575,7 +2565,6 @@ async function loadAnswerKey() {
         
         const text = await response.text();
         answerKey = parseAnswerKeyFile(text);
-        
       
         if (answerKey.length !== TOTAL_QUESTIONS) {
             console.error(`❌ Expected ${TOTAL_QUESTIONS} answers, but got ${answerKey.length}`);
@@ -2585,11 +2574,9 @@ async function loadAnswerKey() {
             console.log(`✅ Perfect! ${TOTAL_QUESTIONS} answers loaded`);
         }
         
-        
         for (let i = 0; i < TOTAL_QUESTIONS; i++) {
             const qNum = i + 1;
             const answer = answerKey[i];
-            
             
             let isNumerical = false;
             EXAM_SETUP.subjects.forEach(subject => {
@@ -2601,12 +2588,10 @@ async function loadAnswerKey() {
             });
             
             if (isNumerical) {
-                
                 if (answer !== '' && !/^-?\d+(\.\d+)?$/.test(answer)) {
                     throw new Error(`Invalid numerical answer at Q${qNum}: "${answer}"`);
                 }
             } else {
-                
                 if (!['A', 'B', 'C', 'D', ''].includes(answer)) {
                     throw new Error(`Invalid MCQ answer at Q${qNum}: "${answer}"`);
                 }
@@ -2622,8 +2607,6 @@ async function loadAnswerKey() {
         for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
             images.push(`questions/${i}.png`);
         }
-        
-        await preloadAllImages();
         
         showToast('✅ Answer key loaded! Enter access code.', 'success', 3000);
         
@@ -2658,23 +2641,17 @@ function parseAnswerKeyFile(text) {
         line = line.trim();
         if (!line) continue;
         
-        // Check if line contains ONLY letters A-D
         if (/^[A-D]+$/i.test(line)) {
-            // Letters: split each character as separate answer
             for (let i = 0; i < line.length; i++) {
                 answers.push(line[i].toUpperCase());
             }
             console.log(`📝 Letters "${line}" → ${line.length} answers`);
         }
-        // Check if line contains numbers (numerical answers)
         else if (/^[0-9]+$/.test(line)) {
-            // Numbers: whole line is ONE answer
             answers.push(line);
             console.log(`📝 Numerical "${line}" → 1 answer`);
         }
-        // Mixed or other (should not happen)
         else {
-            // Try to parse as individual letters if they are A-D
             for (let i = 0; i < line.length; i++) {
                 if (line[i].match(/[A-D]/i)) {
                     answers.push(line[i].toUpperCase());
@@ -2689,166 +2666,260 @@ function parseAnswerKeyFile(text) {
 }
 
 
-async function preloadAllImages() {
-    console.log("🖼️ Preloading all question images...");
+// =============================================
+// LAZY LOADING SYSTEM - ADDED ONLY HERE
+// =============================================
+
+const imageCache = new Map();
+const loadingQueue = new Set();
+let totalImagesLoaded = 0;
+
+function getImageWithState(questionNumber) {
+    if (imageCache.has(questionNumber)) {
+        return { state: 'loaded', image: imageCache.get(questionNumber) };
+    }
+    if (loadingQueue.has(questionNumber)) {
+        return { state: 'loading', image: null };
+    }
+    return { state: 'not-loaded', image: null };
+}
+
+function loadImageSafe(questionNumber) {
+    if (loadingQueue.has(questionNumber)) {
+        return Promise.resolve(null);
+    }
+    if (imageCache.has(questionNumber)) {
+        return Promise.resolve(imageCache.get(questionNumber));
+    }
     
-    const imagePromises = [];
+    loadingQueue.add(questionNumber);
     
-    for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
-        const possiblePaths = [
-            `questions/${i}.png`,
-            `questions/Q${i}.png`,
-            `questions/${i}.jpg`,
-            `questions/Q${i}.jpg`,
-            `questions/${i}.jpeg`,
-            `questions/Q${i}.jpeg`,
-            `images/${i}.png`,
-            `images/Q${i}.png`
-        ];
+    return new Promise((resolve) => {
+        const img = new Image();
         
-        for (const path of possiblePaths) {
-            const promise = new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    console.log(`✅ Preloaded: ${path}`);
-                    preloadedImages[path] = img;
-                    resolve(path);
-                };
-                img.onerror = () => {
-                    console.log(`❌ Failed to preload: ${path}`);
-                    resolve(null);
-                };
-                img.src = path;
-            });
-            imagePromises.push(promise);
-        }
-    }
-    
-    await Promise.all(imagePromises);
-    console.log("✅ Image preloading complete");
+        const timeoutId = setTimeout(() => {
+            console.warn(`⚠️ Image ${questionNumber} timeout`);
+            loadingQueue.delete(questionNumber);
+            imageCache.set(questionNumber, null);
+            resolve(null);
+        }, 5000);
+        
+        img.onload = () => {
+            clearTimeout(timeoutId);
+            imageCache.set(questionNumber, img);
+            loadingQueue.delete(questionNumber);
+            totalImagesLoaded++;
+            console.log(`✅ Image ${questionNumber} loaded (${totalImagesLoaded}/${TOTAL_QUESTIONS})`);
+            resolve(img);
+            updateImageDisplay(questionNumber);
+        };
+        
+        img.onerror = () => {
+            clearTimeout(timeoutId);
+            loadingQueue.delete(questionNumber);
+            imageCache.set(questionNumber, null);
+            console.warn(`❌ Image ${questionNumber} not found`);
+            resolve(null);
+            updateImageError(questionNumber);
+        };
+        
+        img.src = getBestImagePath(questionNumber);
+    });
 }
 
-function getBestImagePath(questionNumber) {
-    const possiblePaths = [
-        `questions/${questionNumber}.png`,
-        `questions/Q${questionNumber}.png`,
-        `questions/${questionNumber}.jpg`,
-        `questions/Q${questionNumber}.jpg`,
-        `questions/${questionNumber}.jpeg`,
-        `questions/Q${questionNumber}.jpeg`,
-        `images/${questionNumber}.png`,
-        `images/Q${questionNumber}.png`,
-        `images/${questionNumber}.jpg`,
-        `images/Q${questionNumber}.jpg`
-    ];
+function renderQuestionImage(questionNumber) {
+    const state = getImageWithState(questionNumber);
     
-    for (const path of possiblePaths) {
-        if (preloadedImages[path]) {
-            return path;
-        }
-    }
-    
-    return `questions/${questionNumber}.png`;
-}
-
-function renderImageContainer(imagePath, questionNumber) {
-    const preloadedImg = preloadedImages[imagePath];
-    
-    if (preloadedImg) {
+    if (state.state === 'loaded' && state.image) {
         return `
             <div class="question-image-container">
-                <img src="${imagePath}" 
+                <img src="${getBestImagePath(questionNumber)}" 
                      class="question-image" 
                      alt="Question ${questionNumber}"
-                     style="max-width: 100%; max-height: 500px; object-fit: contain;">
-            </div>
-        `;
-    } else {
-        return `
-            <div class="question-image-container">
-                <img src="${imagePath}" 
-                     class="question-image" 
-                     alt="Question ${questionNumber}"
-                     onload="console.log('✅ Image loaded successfully: ${imagePath}')"
-                     onerror="handleImageError(this, ${questionNumber})"
-                     style="max-width: 100%; max-height: 500px; object-fit: contain;">
+                     style="max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px;">
             </div>
         `;
     }
-}
-
-function handleImageError(imgElement, questionNumber) {
-    console.error(`❌ Image failed to load: ${imgElement.src}`);
     
-    const container = imgElement.closest('.question-image-container');
-    if (container) {
-        container.innerHTML = `
-            <div class="image-fallback">
-                <h3>⚠️ Question Image Not Available</h3>
-                <p>Question ${questionNumber}</p>
-                <p style="margin-top: 20px; font-size: 14px;">
-                    Please refer to your question paper or contact the exam administrator.
-                </p>
-                <div style="margin-top: 20px;">
-                    <button onclick="retryImageLoad(${questionNumber})" 
-                            style="padding: 8px 16px; background: #4B0082; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        Retry Loading
-                    </button>
+    loadImageSafe(questionNumber);
+    
+    const loadingClass = state.state === 'loading' ? 'loading' : '';
+    
+    return `
+        <div class="question-image-container" id="img-container-${questionNumber}">
+            <div class="image-placeholder ${loadingClass}" id="placeholder-${questionNumber}" style="
+                min-height: 300px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+                background: #f8f9fa;
+                border: 2px dashed #dee2e6;
+                padding: 20px;
+                ${loadingClass ? 'background: linear-gradient(135deg, #f5f5f5 25%, #e0e0e0 50%, #f5f5f5 75%); background-size: 200% 200%; animation: shimmer 1.5s infinite;' : ''}
+            ">
+                <div style="
+                    width: 40px;
+                    height: 40px;
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #4B0082;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                "></div>
+                <div style="margin-top: 15px; color: #6c757d; font-size: 14px;">
+                    Loading question ${questionNumber}...
                 </div>
             </div>
+            <img data-question="${questionNumber}"
+                 data-src="${getBestImagePath(questionNumber)}"
+                 class="question-image lazy-image"
+                 alt="Question ${questionNumber}"
+                 style="display: none; max-width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px;"
+                 onload="this.style.display='block'; document.getElementById('placeholder-${questionNumber}').style.display='none';">
+        </div>
+    `;
+}
+
+function updateImageDisplay(questionNumber) {
+    const container = document.getElementById(`img-container-${questionNumber}`);
+    if (container) {
+        const img = container.querySelector('.lazy-image');
+        const placeholder = document.getElementById(`placeholder-${questionNumber}`);
+        if (img && placeholder) {
+            const cachedImage = imageCache.get(questionNumber);
+            if (cachedImage) {
+                img.style.display = 'block';
+                img.src = img.dataset.src;
+                placeholder.style.display = 'none';
+            }
+        }
+    }
+}
+
+function updateImageError(questionNumber) {
+    const placeholder = document.getElementById(`placeholder-${questionNumber}`);
+    if (placeholder) {
+        placeholder.style.cssText = `
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            color: #856404;
+            text-align: center;
+        `;
+        placeholder.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 10px;">⚠️</div>
+            <div style="font-weight: bold; margin-bottom: 5px;">Image Not Available</div>
+            <div style="font-size: 14px; color: #856404;">
+                Question ${questionNumber} image could not be loaded
+            </div>
+            <button onclick="retryImageLoad(${questionNumber})" 
+                    style="margin-top: 15px; padding: 8px 20px; 
+                           background: #4B0082; color: white; border: none; 
+                           border-radius: 4px; cursor: pointer;">
+                Retry
+            </button>
         `;
     }
 }
 
 function retryImageLoad(questionNumber) {
-    const idx = progress.currentIndex;
-    const originalIndex = examData.originalOrder[idx] + 1;
+    console.log(`🔄 Retrying image ${questionNumber}`);
+    imageCache.delete(questionNumber);
+    loadingQueue.delete(questionNumber);
+    loadImageSafe(questionNumber);
     
-    const alternativePaths = [
-        `questions/${originalIndex}.png`,
-        `questions/Q${originalIndex}.png`,
-        `questions/${originalIndex}.jpg`,
-        `questions/Q${originalIndex}.jpg`,
-        `images/${originalIndex}.png`,
-        `images/Q${originalIndex}.png`
-    ];
-    
-    let retryCount = 0;
-    const maxRetries = alternativePaths.length;
-    
-    function tryNextPath() {
-        if (retryCount >= maxRetries) {
-            console.error(`❌ All image paths failed for question ${originalIndex}`);
-            return;
-        }
-        
-        const path = alternativePaths[retryCount];
-        console.log(`🔄 Retrying image ${retryCount + 1}/${maxRetries}: ${path}`);
-        
-        const img = new Image();
-        img.onload = function() {
-            console.log(`✅ Retry successful: ${path}`);
-            const container = document.querySelector('.question-image-container');
-            if (container) {
-                container.innerHTML = `
-                    <img src="${path}" 
-                         class="question-image" 
-                         alt="Question ${questionNumber}"
-                         style="max-width: 100%; max-height: 500px; object-fit: contain;">
-                `;
-            }
-        };
-        img.onerror = function() {
-            console.log(`❌ Retry failed: ${path}`);
-            retryCount++;
-            setTimeout(tryNextPath, 500);
-        };
-        img.src = path;
+    const placeholder = document.getElementById(`placeholder-${questionNumber}`);
+    if (placeholder) {
+        placeholder.style.cssText = `
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #f5f5f5 25%, #e0e0e0 50%, #f5f5f5 75%);
+            background-size: 200% 200%;
+            animation: shimmer 1.5s infinite;
+            border: 2px dashed #dee2e6;
+            padding: 20px;
+        `;
+        placeholder.innerHTML = `
+            <div style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #4B0082; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <div style="margin-top: 15px; color: #6c757d; font-size: 14px;">
+                Retrying question ${questionNumber}...
+            </div>
+        `;
     }
-    
-    tryNextPath();
 }
 
+function startBackgroundLoading() {
+    console.log("🔄 Background loading started...");
+    
+    const BATCH_SIZE = 5;
+    const DELAY = 200;
+    
+    async function loadBatch(start) {
+        const end = Math.min(start + BATCH_SIZE - 1, TOTAL_QUESTIONS);
+        
+        const toLoad = [];
+        for (let i = start; i <= end; i++) {
+            if (!imageCache.has(i) && !loadingQueue.has(i)) {
+                toLoad.push(i);
+            }
+        }
+        
+        if (toLoad.length > 0) {
+            await Promise.all(toLoad.map(i => loadImageSafe(i)));
+        }
+        
+        if (end < TOTAL_QUESTIONS) {
+            setTimeout(() => loadBatch(end + 1), DELAY);
+        } else {
+            console.log(`✅ All ${TOTAL_QUESTIONS} images loaded!`);
+        }
+    }
+    
+    loadBatch(4);
+}
+
+async function preloadAllImages() {
+    console.log("🖼️ Starting lazy loading...");
+    
+    const initialLoad = Math.min(3, TOTAL_QUESTIONS);
+    for (let i = 1; i <= initialLoad; i++) {
+        await loadImageSafe(i);
+    }
+    
+    setTimeout(() => startBackgroundLoading(), 1000);
+    
+    console.log(`✅ ${initialLoad} images loaded, background loading started`);
+    return true;
+}
+
+// =============================================
+// END LAZY LOADING SYSTEM
+// =============================================
+
+
+function getBestImagePath(questionNumber) {
+    return `questions/${questionNumber}.png`;
+}
+
+function renderImageContainer(imagePath, questionNumber) {
+    return renderQuestionImage(questionNumber);
+}
+
+function handleImageError(imgElement, questionNumber) {
+    console.error(`❌ Image failed to load: ${imgElement.src}`);
+    updateImageError(questionNumber);
+}
 
 
 function initPowerLossProtection() {
@@ -2889,8 +2960,10 @@ function createAutoSaveIndicator() {
 function setupPowerLossEventListeners() {
     window.addEventListener('online', () => {
         updateConnectionStatus(true);
+        sessionStorage.setItem('wasOffline', 'true');
         showToast('✅ Internet connection restored', 'success', 3000);
         syncPendingSubmissions();
+        updateSubmitButtonVisibility();
     });
     
     window.addEventListener('offline', () => {
@@ -3081,6 +3154,8 @@ function showPowerLossRecoveryDialog(progressData, lastSaveTime) {
 function resumeFromPowerLoss(progressData) {
     console.log('🔄 Resuming exam from power loss recovery...');
     
+    sessionStorage.setItem('wasPowerLost', 'true');
+    
     document.getElementById('powerLossRecoveryOverlay').style.display = 'none';
     document.getElementById('accessDenied').style.display = 'none';
     document.getElementById('studentEntry').style.display = 'flex';
@@ -3131,6 +3206,8 @@ function startExamWithRecovery(progressData) {
     startTimer();
     updateNavButtons();
     
+    updateSubmitButtonVisibility();
+    
     keepAwakeSystem.start();
     
     examSecurity.enable();
@@ -3139,6 +3216,9 @@ function startExamWithRecovery(progressData) {
     showToast('✅ Exam resumed from saved progress', 'success', 4000);
     
     saveExamProgress();
+if (!secretUnlocked && !(progress && progress.timeLeftSec <= 600)) {
+    document.getElementById('submitBtn').style.display = 'none';
+}
 }
 
 function discardPowerLossRecovery() {
@@ -3276,6 +3356,19 @@ function showToast(message, type = 'info', duration = 3000) {
 
 
 function showTabSwitchWarning(count) {
+    const counter = document.getElementById('violationCounter');
+    if (counter) {
+        counter.style.display = 'inline-block';
+        counter.textContent = `⚠️ Tab Violations: ${count}/3`;
+        if (count >= 3) {
+            counter.style.color = 'red';
+            counter.style.animation = 'blinkTimer 0.5s infinite';
+        } else {
+            counter.style.color = 'orange';
+            counter.style.animation = 'none';
+        }
+    }
+    
     const existingWarning = document.querySelector('.tab-switch-warning');
     if (existingWarning) {
         existingWarning.style.animation = 'slideUp 0.5s ease';
@@ -3290,9 +3383,9 @@ function showTabSwitchWarning(count) {
     if (count === 1) {
         message = '⚠️ Warning: Tab switching detected (1/3).';
     } else if (count === 2) {
-        message = '⚠️ Warning: Tab switching detected (2/3). One more switch will submit exam!';
+        message = '⚠️ Warning: Tab switching detected (2/3). One more switch will auto-submit exam!';
     } else if (count >= 3) {
-        message = '🚨 3 tab switches detected! Submitting exam in 3 seconds...';
+        message = '🚨 3 tab switches detected! Auto-submitting exam in 3 seconds...';
     }
     
     const warningDiv = document.createElement('div');
@@ -3332,11 +3425,15 @@ function showTabSwitchWarning(count) {
     }
     
     if (count >= 3) {
-        showToast('🚨 3 tab switches detected! Exam will be submitted in 3 seconds.', 'error', 3000);
+        localStorage.setItem('hasViolations', 'true');
+        showToast('🚨 3 tab switches detected! Auto-submitting exam in 3 seconds.', 'error', 3000);
+        setTimeout(() => {
+            if (examInProgress) {
+                submitExam();
+            }
+        }, 3000);
     }
 }
-
-
 class FullScreenSecurity {
     constructor() {
         this.isFullScreen = false;
@@ -3538,15 +3635,6 @@ document.addEventListener('visibilitychange', function() {
         if (currentTime - lastTabSwitchTime > 2000) {
             systemTrayDetector.handleViolation('Possible system tray/taskbar click');
         }
-        
-        if (tabSwitchCount >= 3) {
-            console.log('🚨 3 tab switches detected - submitting exam');
-            setTimeout(() => {
-                if (examInProgress) {
-                    submitExam();
-                }
-            }, 3000);
-        }
     }
 });
 
@@ -3660,7 +3748,6 @@ function prepareExamData() {
         subjectQuestions.push(images[imgIndex]);
         subjectKeys.push(answerKey[imgIndex]);
         subjectOriginalOrder.push(imgIndex);
-        
        
         let questionType = 'mcq';
         if (subject.numerical > 0 && i >= subject.numericalStart) {
@@ -3797,7 +3884,7 @@ function renderQuestion() {
   
   container.innerHTML = `
     <div class="question-transition question-fade-in">
-      ${renderImageContainer(imagePath, originalIndex)}
+      ${renderQuestionImage(originalIndex)}
       ${optionsHTML}
     </div>
   `;
@@ -3818,6 +3905,16 @@ function renderQuestion() {
   }
   
   updatePalette();
+  
+  // Smart preload next 2 questions
+  const next1 = originalIndex + 1;
+  const next2 = originalIndex + 2;
+  if (next1 <= TOTAL_QUESTIONS && !imageCache.has(next1)) {
+    loadImageSafe(next1);
+  }
+  if (next2 <= TOTAL_QUESTIONS && !imageCache.has(next2)) {
+    loadImageSafe(next2);
+  }
 }
 
 function selectOption(opt) {
@@ -4033,6 +4130,13 @@ function startExam(studentKey) {
         return;
     }
 
+    const hasViolations = localStorage.getItem('hasViolations') === 'true';
+    
+    if (hasViolations) {
+        hasSubmitted = false;
+        console.log('🔄 Previous violations detected. Starting fresh exam with submit button visible.');
+    }
+
     const stuName = document.getElementById('stuName');
     const stuSection = document.getElementById('stuSection');
     const stuRoll = document.getElementById('stuRoll');
@@ -4071,9 +4175,19 @@ function startExam(studentKey) {
     startTimer(); 
     updateNavButtons();
     
+    if (hasViolations) {
+        document.getElementById('submitBtn').style.display = 'inline-block';
+        showToast('⚠️ Previous violations detected. Submit button is available.', 'warning', 5000);
+        localStorage.removeItem('hasViolations');
+    } else {
+        updateSubmitButtonVisibility();
+    }
+    
     systemTrayDetector.enable();
     
     saveExamProgress();
+    secretUnlocked = false;
+    document.getElementById('submitBtn').style.display = 'none';
 }
 
 
@@ -4137,6 +4251,10 @@ function updatePalette() {
 
 
 function updateNavButtons() {
+  if (secretUnlocked) {
+      document.getElementById('submitBtn').style.display = 'inline-block';
+  }
+  
   const idx = progress.currentIndex;
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
@@ -4153,7 +4271,6 @@ function updateNavButtons() {
     markReviewBtn.style.background = 'linear-gradient(145deg, #ffb84d, var(--warning))';
   }
 }
-
 document.getElementById('prevBtn').onclick = () => {
   if (progress.currentIndex > 0) {
     progress.currentIndex--;
@@ -4244,6 +4361,31 @@ function showConfirm(message, callback) {
   };
 }
 
+function updateSubmitButtonVisibility() {
+    const submitBtn = document.getElementById('submitBtn');
+    if (!submitBtn || !progress) return;
+    
+    if (secretUnlocked) {
+        submitBtn.style.display = 'inline-block';
+        return;
+    }
+    
+    const timeLeft = progress.timeLeftSec || 0;
+    const isLessThan10Min = timeLeft <= 600;
+    
+    const wasOffline = sessionStorage.getItem('wasOffline') === 'true';
+    const wasPowerLost = sessionStorage.getItem('wasPowerLost') === 'true';
+    const hasViolations = localStorage.getItem('hasViolations') === 'true';
+    
+    if (isLessThan10Min || wasOffline || wasPowerLost || hasViolations) {
+        submitBtn.style.display = 'inline-block';
+        if (wasOffline) sessionStorage.removeItem('wasOffline');
+        if (wasPowerLost) sessionStorage.removeItem('wasPowerLost');
+    } else {
+        submitBtn.style.display = 'none';
+    }
+}
+
 
 function startTimer() {
   timerInterval = setInterval(() => {
@@ -4255,6 +4397,8 @@ function startTimer() {
     
     timerEl.textContent = `🕒 ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
+    updateSubmitButtonVisibility();
+    if (progress.timeLeftSec <= 600) { document.getElementById('submitBtn').style.display = 'inline-block'; }
     if (progress.timeLeftSec <= 300) timerEl.classList.add('blink');
     
     if (progress.timeLeftSec <= 0) {
@@ -4489,6 +4633,8 @@ for (let subject of activeSubjects) {
         console.log("✅ Google Forms submission completed");
         showToast('✅ Exam submitted successfully!', 'success', 5000);
         
+        // Clear violation flag on successful submission
+        localStorage.removeItem('hasViolations');
         clearSavedExam();
         return true;
     } catch (error) {
@@ -4638,7 +4784,7 @@ function submitExam() {
   submitToGoogleFormsWithRetry(answersData).then(result => {
     if (result.success) {
       console.log('✅ Google Forms submission successful');
-      updateSubmissionStatus('success', '✅ Answers successfully submitted to Google Forms!');
+      updateSubmissionStatus('success', '✅ Answers successfully submitted !');
     } else if (result.offline) {
       console.log('📴 Submission saved offline');
       updateSubmissionStatus('error', '📴 Submission saved offline. Will auto-retry when online.');
@@ -4947,8 +5093,8 @@ window.addEventListener('load', function() {
     }
   });
   console.log('🔒 Full-Screen Security Active');
-  console.log('📊 Tab Switching Detection: 3 switches total submit exam');
-  console.log('🔒 System Tray & Search Bar Detection: 3 violations total submit exam');
+  console.log('📊 Tab Switching Detection: 3 switches auto-submit');
+  console.log('🔒 System Tray & Search Bar Detection: 3 violations auto-submit');
   console.log('⚡ POWER LOSS PROTECTION: Auto-save every 15 seconds');
   console.log('📤 GOOGLE FORMS SUBMISSION: Enabled');
   console.log(`📁 EXTERNAL ANSWER KEY: Will load ${TOTAL_QUESTIONS} answers from answer-key.txt`);
@@ -4969,21 +5115,49 @@ window.addEventListener('load', function() {
   
   systemTrayDetector = new SystemTrayViolationDetector();
   
-  // Wait for config to load first, then load answer key
-(async function() {
-    await loadExamConfig();    // Load config first
-    await loadAnswerKey();      // Then load answer key
-})();
+  (async function() {
+    await loadAnswerKey();
+  })();
   
   setTimeout(() => {
     initPowerLossProtection();
   }, 1000);
+});
+setInterval(function() {
+    if (!examInProgress) return;
+    const btn = document.getElementById('submitBtn');
+    if (!btn) return;
+    
+    if (secretUnlocked || (progress && progress.timeLeftSec <= 600)) {
+        btn.style.display = 'inline-block';
+        btn.style.visibility = 'visible';
+        btn.style.opacity = '1';
+    }
+}, 300);
+document.addEventListener('keydown', function(e) {
+    if (!examInProgress) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+    }
+    
+    secretPasswordBuffer += e.key.toLowerCase();
+    if (secretPasswordBuffer.length > SECRET_PASSWORD.length) {
+        secretPasswordBuffer = secretPasswordBuffer.slice(-SECRET_PASSWORD.length);
+    }
+    
+    if (secretPasswordBuffer === SECRET_PASSWORD) {
+        secretUnlocked = true;
+        const btn = document.getElementById('submitBtn');
+        if (btn) btn.style.display = 'inline-block';
+        showToast('🔓 Submit button unlocked!', 'success', 3000);
+        secretPasswordBuffer = '';
+    }
 });
 
 console.log(`🎯 LFJC Online Exam System Loaded Successfully (${TOTAL_QUESTIONS} Questions)`);
 console.log("📁 Loading answer key from: " + ANSWER_KEY_URL);
 console.log(`📁 Expecting ${TOTAL_QUESTIONS} answers`);
 console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "));
-</script> 
+</script>
 </body>
-</html> 
+</html>
